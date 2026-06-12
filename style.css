@@ -320,15 +320,50 @@ html, body {
   background: rgba(255, 209, 102, 0.4);
 }
 
-/* Op touch-toestellen: toetsenbord-hulpbalk verbergen en meubelbalk boven de knoppen */
+#meubel-toggle {
+  position: fixed;
+  z-index: 6;
+  top: 16px;
+  right: 16px;
+  font-size: 24px;
+  width: 56px;
+  height: 56px;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: opacity 0.5s ease;
+}
+
+#meubel-toggle.verborgen {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Op touch-toestellen: hulpbalk weg, meubelmenu compact achter het 🪑-knopje */
 @media (hover: none) and (pointer: coarse) {
   #hulp {
     display: none;
   }
 
   #meubel-balk {
-    bottom: 110px;
-    max-width: 70vw;
+    bottom: auto;
+    top: 84px;
+    right: 16px;
+    left: auto;
+    transform: none;
+    max-width: 240px;
+    gap: 6px;
+    padding: 8px;
+  }
+
+  .meubel-knop {
+    font-size: 10px;
+    padding: 4px 6px;
+    width: 64px;
+  }
+
+  .meubel-emoji {
+    font-size: 19px;
   }
 
   #panel {

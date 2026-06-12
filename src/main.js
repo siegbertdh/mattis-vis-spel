@@ -104,9 +104,23 @@ function fadeSwitch(action) {
   }, 450);
 }
 
-// Meubelbalk opbouwen
+// Meubelbalk opbouwen. Op touch-toestellen zit hij achter een 🪑-knopje
+// (rechtsboven) en klapt hij dicht zodra je iets kiest, zodat de vloer
+// vrij blijft om te tikken.
 const balk = document.getElementById('meubel-balk');
 const wisKnop = document.createElement('button');
+
+const meubelToggle = document.createElement('div');
+meubelToggle.id = 'meubel-toggle';
+meubelToggle.className = 'touch-knop verborgen';
+meubelToggle.textContent = '🪑';
+document.body.appendChild(meubelToggle);
+meubelToggle.addEventListener('click', () => balk.classList.toggle('verborgen'));
+
+function sluitBalkOpTouch() {
+  if (heeftTouch) balk.classList.add('verborgen');
+}
+
 for (const item of CATALOG) {
   const knop = document.createElement('button');
   knop.className = 'meubel-knop';
@@ -114,7 +128,10 @@ for (const item of CATALOG) {
   knop.addEventListener('click', () => {
     wisKnop.classList.remove('actief');
     placer.select(item.id);
-    showToast(`Klik op de vloer om je ${item.naam.toLowerCase()} neer te zetten (R = draaien)`);
+    sluitBalkOpTouch();
+    showToast(heeftTouch
+      ? `Tik op de vloer om je ${item.naam.toLowerCase()} neer te zetten`
+      : `Klik op de vloer om je ${item.naam.toLowerCase()} neer te zetten (R = draaien)`);
   });
   balk.appendChild(knop);
 }
@@ -123,7 +140,12 @@ wisKnop.innerHTML = '<span class="meubel-emoji">🗑️</span>Weghalen';
 wisKnop.addEventListener('click', () => {
   const aan = placer.toggleDeleteMode();
   wisKnop.classList.toggle('actief', aan);
-  if (aan) showToast('Klik op een meubel om het weg te halen (Esc = stoppen)');
+  if (aan) {
+    sluitBalkOpTouch();
+    showToast(heeftTouch
+      ? 'Tik op een meubel om het weg te halen'
+      : 'Klik op een meubel om het weg te halen (Esc = stoppen)');
+  }
 });
 balk.appendChild(wisKnop);
 
@@ -152,7 +174,11 @@ function gaNaarBinnen() {
   family.bounds = { radius: 11, minY: 0.8, maxY: 9 };
   teleportFamilie(home.scene, playerFish.position);
   placer.enabled = true;
-  balk.classList.remove('verborgen');
+  if (heeftTouch) {
+    meubelToggle.classList.remove('verborgen');
+  } else {
+    balk.classList.remove('verborgen');
+  }
   player.snapCamera();
   showToast('Welkom in je nestje! 🏠');
   if (!huisHintGetoond) {
@@ -174,6 +200,7 @@ function gaNaarBuiten() {
   placer.cancel();
   placer.enabled = false;
   balk.classList.add('verborgen');
+  meubelToggle.classList.add('verborgen');
   player.snapCamera();
   showToast('Daar is de oceaan weer! 🌊');
 }
