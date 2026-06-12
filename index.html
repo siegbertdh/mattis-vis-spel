@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mattis' Vissenspel 🐠</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./lib/three.module.js"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="game"></div>
+
+  <!-- Keuzescherm -->
+  <div id="overlay">
+    <div id="panel">
+      <h1>🐠 Mattis' Vissenspel 🐠</h1>
+      <p class="subtitle">Kies jouw vis en duik de oceaan in!</p>
+
+      <div class="kies-blok">
+        <h2>Welke vis wil je zijn?</h2>
+        <div id="vormen">
+          <button class="vorm-knop selected" data-vorm="gewoon">🐟 Gewone vis</button>
+          <button class="vorm-knop" data-vorm="dik">🐡 Dikke vis</button>
+          <button class="vorm-knop" data-vorm="lang">🐬 Lange vis</button>
+        </div>
+      </div>
+
+      <div class="kies-blok">
+        <h2>Welke kleur?</h2>
+        <div id="kleuren"></div>
+      </div>
+
+      <button id="start-knop">🌊 Duik erin! 🌊</button>
+    </div>
+  </div>
+
+  <!-- Hulp tijdens het spel -->
+  <div id="hulp" class="verborgen">
+    <strong>Zwemmen:</strong> pijltjes of WASD &nbsp;•&nbsp;
+    <strong>Omhoog:</strong> spatie &nbsp;•&nbsp;
+    <strong>Omlaag:</strong> shift &nbsp;•&nbsp;
+    <strong>Rondkijken:</strong> sleep met de muis &nbsp;•&nbsp;
+    <strong>Nest bouwen:</strong> N &nbsp;•&nbsp;
+    <strong>Naar binnen:</strong> zwem het nest in
+  </div>
+
+  <!-- Korte meldingen -->
+  <div id="toast" class="verborgen"></div>
+
+  <!-- Meubelbalk (alleen in het huisje) -->
+  <div id="meubel-balk" class="verborgen"></div>
+
+  <!-- Fade bij wereldwissel -->
+  <div id="fade"></div>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>

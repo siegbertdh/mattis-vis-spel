@@ -1,0 +1,258 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: "Comic Sans MS", "Chalkboard SE", "Marker Felt", sans-serif;
+  background: #0b3954;
+}
+
+#game {
+  position: fixed;
+  inset: 0;
+}
+
+#game canvas {
+  display: block;
+}
+
+/* ---------- Keuzescherm ---------- */
+
+#overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-left: 5vw;
+  pointer-events: none;
+  transition: opacity 0.8s ease;
+}
+
+#overlay.weg {
+  opacity: 0;
+}
+
+#panel {
+  pointer-events: auto;
+  background: linear-gradient(160deg, rgba(8, 56, 88, 0.92), rgba(12, 90, 130, 0.92));
+  border: 4px solid #ffd166;
+  border-radius: 28px;
+  padding: 28px 34px;
+  max-width: 420px;
+  box-shadow: 0 12px 50px rgba(0, 0, 0, 0.45);
+  color: #fff;
+  text-align: center;
+}
+
+#panel h1 {
+  font-size: 28px;
+  color: #ffd166;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
+  margin-bottom: 6px;
+}
+
+.subtitle {
+  font-size: 16px;
+  color: #bfe8ff;
+  margin-bottom: 20px;
+}
+
+.kies-blok {
+  margin-bottom: 20px;
+}
+
+.kies-blok h2 {
+  font-size: 17px;
+  color: #9fe3ff;
+  margin-bottom: 10px;
+}
+
+#vormen {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vorm-knop {
+  font-family: inherit;
+  font-size: 17px;
+  padding: 10px 16px;
+  border-radius: 14px;
+  border: 3px solid transparent;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.12s ease;
+}
+
+.vorm-knop:hover {
+  transform: scale(1.04);
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.vorm-knop.selected {
+  border-color: #ffd166;
+  background: rgba(255, 209, 102, 0.25);
+}
+
+#kleuren {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+}
+
+.kleur-bol {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 4px solid rgba(255, 255, 255, 0.25);
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.12s ease;
+}
+
+.kleur-bol:hover {
+  transform: scale(1.15);
+}
+
+.kleur-bol.selected {
+  border-color: #fff;
+  transform: scale(1.15);
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.6);
+}
+
+#start-knop {
+  font-family: inherit;
+  font-size: 22px;
+  font-weight: bold;
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #ffd166, #ff9f43);
+  color: #5a3000;
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+
+#start-knop:hover {
+  transform: scale(1.05);
+}
+
+/* ---------- Hulpbalk in het spel ---------- */
+
+#hulp {
+  position: fixed;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(5, 35, 55, 0.65);
+  color: #cfeeff;
+  font-size: 14px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  white-space: nowrap;
+  transition: opacity 1s ease;
+}
+
+#hulp.verborgen {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ---------- Toast-meldingen ---------- */
+
+#toast {
+  position: fixed;
+  top: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(5, 35, 55, 0.78);
+  border: 2px solid #ffd166;
+  color: #ffe9b3;
+  font-size: 18px;
+  padding: 10px 24px;
+  border-radius: 999px;
+  white-space: nowrap;
+  transition: opacity 0.5s ease;
+}
+
+#toast.verborgen {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ---------- Meubelbalk in het huisje ---------- */
+
+#meubel-balk {
+  position: fixed;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  padding: 10px 14px;
+  background: rgba(5, 35, 55, 0.75);
+  border: 3px solid #ffd166;
+  border-radius: 22px;
+  transition: opacity 0.5s ease;
+  max-width: 95vw;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+#meubel-balk.verborgen {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.meubel-knop {
+  font-family: inherit;
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 10px;
+  border-radius: 14px;
+  border: 2px solid transparent;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.12s ease;
+}
+
+.meubel-knop:hover {
+  transform: scale(1.08);
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.meubel-knop.actief {
+  border-color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.3);
+}
+
+.meubel-emoji {
+  font-size: 22px;
+}
+
+/* ---------- Fade bij wereldwissel ---------- */
+
+#fade {
+  position: fixed;
+  inset: 0;
+  background: #06283d;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+
+#fade.zichtbaar {
+  opacity: 1;
+}
