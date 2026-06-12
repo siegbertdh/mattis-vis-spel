@@ -24,7 +24,7 @@ export function createFish({ shape = 'gewoon', color = 0xff8c2e, size = 1 } = {}
   const [len, hgt, wid] = def.body;
   const group = new THREE.Group();
 
-  const skin = new THREE.MeshStandardMaterial({ color, roughness: 0.55, metalness: 0.05 });
+  const skin = new THREE.MeshStandardMaterial({ color, roughness: 0.4, metalness: 0.08 });
   const finColor = new THREE.Color(color).lerp(new THREE.Color(0xffffff), 0.25);
   const finMat = new THREE.MeshStandardMaterial({
     color: finColor, roughness: 0.6, transparent: true, opacity: 0.92, side: THREE.DoubleSide,
@@ -33,6 +33,7 @@ export function createFish({ shape = 'gewoon', color = 0xff8c2e, size = 1 } = {}
   // Romp
   const body = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16), skin);
   body.scale.set(wid, hgt, len);
+  body.castShadow = true;
   group.add(body);
 
   // Staart (kegel, punt aan de romp, waaiert naar achter)

@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { makeDotTexture } from './environment.js';
+import { loadTexture } from './realism.js';
 
 // Het holletje in het nest: een warme koepelkamer onder het zand.
 export const HOME_BOUNDS = { radius: 10.5, minY: 1, maxY: 8.5 };
@@ -18,15 +19,25 @@ export function createHomeScene() {
   // Vloer
   const floor = new THREE.Mesh(
     new THREE.CircleGeometry(13, 48),
-    new THREE.MeshStandardMaterial({ color: 0xd9c27e, roughness: 1 }),
+    new THREE.MeshStandardMaterial({
+      color: 0xe8d49a, roughness: 0.95,
+      map: loadTexture('assets/sand_01_diff_1k.jpg', 5, 5, true),
+      normalMap: loadTexture('assets/sand_01_nor_gl_1k.jpg', 5, 5),
+      normalScale: new THREE.Vector2(0.8, 0.8),
+    }),
   );
   floor.rotation.x = -Math.PI / 2;
+  floor.receiveShadow = true;
   scene.add(floor);
 
   // Koepelwand
   const dome = new THREE.Mesh(
     new THREE.SphereGeometry(13.1, 36, 18, 0, Math.PI * 2, 0, Math.PI / 2),
-    new THREE.MeshStandardMaterial({ color: 0x9a7b54, roughness: 0.95, side: THREE.BackSide }),
+    new THREE.MeshStandardMaterial({
+      color: 0xe0c49c, roughness: 0.95, side: THREE.BackSide,
+      map: loadTexture('assets/rock_boulder_dry_diff_1k.jpg', 7, 3, true),
+      normalMap: loadTexture('assets/rock_boulder_dry_nor_gl_1k.jpg', 7, 3),
+    }),
   );
   scene.add(dome);
 
@@ -46,7 +57,11 @@ export function createHomeScene() {
 
   // Het deurtje terug naar de oceaan: houten boog met gloeiend waterportaal
   const doorPos = new THREE.Vector3(0, 1.8, 12.3);
-  const wood = new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 0.8 });
+  const wood = new THREE.MeshStandardMaterial({
+    color: 0xb5824f, roughness: 0.8,
+    map: loadTexture('assets/weathered_planks_diff_1k.jpg', 1, 1, true),
+    normalMap: loadTexture('assets/weathered_planks_nor_gl_1k.jpg', 1, 1),
+  });
   const arch = new THREE.Mesh(new THREE.TorusGeometry(2.1, 0.35, 8, 16, Math.PI), wood);
   arch.position.set(0, 2.1, 12.3);
   arch.rotation.y = Math.PI; // opening naar de kamer

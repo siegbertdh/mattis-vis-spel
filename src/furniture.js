@@ -1,9 +1,20 @@
 import * as THREE from 'three';
+import { loadTexture } from './realism.js';
 
 const STORAGE_KEY = 'mattis-nest-meubels';
 
 function mat(color, opts = {}) {
   return new THREE.MeshStandardMaterial({ color, roughness: 0.7, ...opts });
+}
+
+// Gedeelde houttextuur voor houten meubels (kleur blijft de tint bepalen)
+const woodDiff = loadTexture('assets/weathered_planks_diff_1k.jpg', 1, 1, true);
+const woodNor = loadTexture('assets/weathered_planks_nor_gl_1k.jpg', 1, 1);
+
+function woodMat(color) {
+  return new THREE.MeshStandardMaterial({
+    color, roughness: 0.75, map: woodDiff, normalMap: woodNor,
+  });
 }
 
 // Alle meubels zijn procedureel en staan met hun voet op y=0.
@@ -71,10 +82,10 @@ export const CATALOG = [
     id: 'krukje', naam: 'Krukje', emoji: '🪑',
     build() {
       const g = new THREE.Group();
-      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.26, 0.5, 8), mat(0x8b5a2b));
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.26, 0.5, 8), woodMat(0xc89060));
       leg.position.y = 0.25;
       g.add(leg);
-      const seat = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.16, 14), mat(0xb5773a));
+      const seat = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.16, 14), woodMat(0xd8a268));
       seat.position.y = 0.58;
       g.add(seat);
       return g;
@@ -101,12 +112,12 @@ export const CATALOG = [
     id: 'schatkist', naam: 'Schatkist', emoji: '💰',
     build() {
       const g = new THREE.Group();
-      const box = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.65, 0.9), mat(0x7a4a21));
+      const box = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.65, 0.9), woodMat(0xa87648));
       box.position.y = 0.33;
       g.add(box);
       const lid = new THREE.Mesh(
         new THREE.CylinderGeometry(0.45, 0.45, 1.4, 12, 1, false, 0, Math.PI),
-        mat(0x8b5a2b),
+        woodMat(0xc89060),
       );
       lid.rotation.z = Math.PI / 2;
       lid.position.y = 0.66;

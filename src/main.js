@@ -8,18 +8,47 @@ import { createHomeScene, HOME_BOUNDS } from './home.js';
 import { FurniturePlacer, CATALOG } from './furniture.js';
 import { setupUI } from './ui.js';
 import { setupTouchControls, showTouchControls, touchInput } from './touch.js';
+import { QUALITY, createEnvMap } from './realism.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const container = document.getElementById('game');
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.15;
+if (QUALITY === 'hoog') {
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+}
 container.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 400);
 
 const environment = new Environment(scene);
+
+// Realistische reflecties: blauwige envmap buiten, warme binnen
+scene.environment = createEnvMap(renderer, 0xa9dcff, 0x2d7cb0, 0x0d3a55, 0xfff2c4);
+
+// Zachte schaduwen (alleen op de computer); het schaduwgebied volgt de speler
+if (QUALITY === 'hoog') {
+  const sun = environment.sun;
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  sun.shadow.camera.left = -45;
+  sun.shadow.camera.right = 45;
+  sun.shadow.camera.top = 45;
+  sun.shadow.camera.bottom = -45;
+  sun.shadow.camera.near = 1;
+  sun.shadow.camera.far = 250;
+  sun.shadow.bias = -0.0005;
+  scene.add(sun.target);
+}
 
 // Wilde scholen die hun eigen rondjes zwemmen
 const wildSchools = [
@@ -88,6 +117,20 @@ const heeftTouch = setupTouchControls({ onNest: probeerNestBouwen });
 
 // ----- De binnenwereld van het nest -----
 const home = createHomeScene();
+home.scene.environment = createEnvMap(renderer, 0xffe7c0, 0x8a6a45, 0x3a2c1c);
+
+// Bloom-gloed op anemonen en lampjes (alleen op de computer)
+let composer = null;
+let renderPass = null;
+if (QUALITY === 'hoog') {
+  composer = new EffectComposer(renderer);
+  renderPass = new RenderPass(scene, camera);
+  composer.addPass(renderPass);
+  composer.addPass(new UnrealBloomPass(
+    new THREE.Vector2(window.innerWidth, window.innerHeight), 0.35, 0.5, 0.85,
+  ));
+  composer.addPass(new OutputPass());
+}
 const placer = new FurniturePlacer(home.scene, camera, renderer.domElement);
 placer.loadFromStorage();
 
@@ -250,6 +293,7 @@ window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+  composer?.setSize(window.innerWidth, window.innerHeight);
 });
 
 const clock = new THREE.Clock();
@@ -263,6 +307,14 @@ function animate() {
     environment.update(dt, time);
     nest.update(dt);
     for (const school of wildSchools) school.update(dt, time);
+
+    // Schaduwgebied volgt de speler (of de preview-vis)
+    if (QUALITY === 'hoog') {
+      const focus = playerFish.position;
+      environment.sun.position.set(focus.x + 30, focus.y + 90, focus.z + 20);
+      environment.sun.target.position.copy(focus);
+      environment.sun.target.updateMatrixWorld();
+    }
   } else {
     home.update(dt, time);
   }
@@ -295,6 +347,12 @@ function animate() {
     animateFish(playerFish, dt, 0.15);
   }
 
-  renderer.render(activeWorld === 'home' ? home.scene : scene, camera);
+  const activeScene = activeWorld === 'home' ? home.scene : scene;
+  if (composer) {
+    renderPass.scene = activeScene;
+    composer.render();
+  } else {
+    renderer.render(activeScene, camera);
+  }
 }
 animate();

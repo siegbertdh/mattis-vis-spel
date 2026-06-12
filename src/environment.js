@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { loadTexture, createCausticsTexture, createWaterNormalsTexture, createRockGeometry } from './realism.js';
 
 const WORLD = 150;
 
@@ -46,7 +47,12 @@ export class Environment {
     this.sun.position.set(30, 90, 20);
     scene.add(this.sun);
 
+    // Gedeelde texturen
+    this.rockDiff = loadTexture('assets/rock_boulder_dry_diff_1k.jpg', 2, 2, true);
+    this.rockNor = loadTexture('assets/rock_boulder_dry_nor_gl_1k.jpg', 2, 2);
+
     this.buildSand();
+    this.buildWaterSurface();
     this.buildSeaweed();
     this.buildCorals();
     this.buildRocksAndShells();
@@ -57,15 +63,61 @@ export class Environment {
   }
 
   buildSand() {
-    const geo = new THREE.PlaneGeometry(WORLD * 3, WORLD * 3, 80, 80);
+    const geo = new THREE.PlaneGeometry(WORLD * 3, WORLD * 3, 96, 96);
     geo.rotateX(-Math.PI / 2);
     const pos = geo.attributes.position;
     for (let i = 0; i < pos.count; i++) {
       pos.setY(i, groundHeight(pos.getX(i), pos.getZ(i)));
     }
     geo.computeVertexNormals();
-    const sand = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0xd9c27e, roughness: 1 }));
+
+    // Echt zand (kleur + reliëf) met caustics: het dansende zonlichtpatroon
+    this.causticsTex = createCausticsTexture();
+    this.causticsTex.repeat.set(64, 64);
+    this.sandMat = new THREE.MeshStandardMaterial({
+      color: 0xe8d49a,
+      roughness: 0.95,
+      map: loadTexture('assets/sand_01_diff_1k.jpg', 36, 36, true),
+      normalMap: loadTexture('assets/sand_01_nor_gl_1k.jpg', 36, 36),
+      normalScale: new THREE.Vector2(0.9, 0.9),
+      emissive: 0xaaddff,
+      emissiveIntensity: 0.18,
+      emissiveMap: this.causticsTex,
+    });
+    const sand = new THREE.Mesh(geo, this.sandMat);
+    sand.receiveShadow = true;
     this.scene.add(sand);
+  }
+
+  buildWaterSurface() {
+    // Het golvende wateroppervlak, gezien van onderen
+    this.waterNormals = createWaterNormalsTexture();
+    this.waterNormals.repeat.set(10, 10);
+    const water = new THREE.Mesh(
+      new THREE.PlaneGeometry(WORLD * 3, WORLD * 3),
+      new THREE.MeshStandardMaterial({
+        color: 0x2d86c8,
+        transparent: true,
+        opacity: 0.6,
+        roughness: 0.15,
+        metalness: 0.2,
+        normalMap: this.waterNormals,
+        normalScale: new THREE.Vector2(2.2, 2.2),
+        side: THREE.DoubleSide,
+        depthWrite: false,
+      }),
+    );
+    water.rotation.x = Math.PI / 2; // vlak kijkt naar beneden
+    water.position.y = 62;
+    this.scene.add(water);
+
+    // Zonnegloed boven het water
+    const glow = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: makeDotTexture(true), color: 0xfff6d8, transparent: true, opacity: 0.85, depthWrite: false,
+    }));
+    glow.scale.setScalar(90);
+    glow.position.set(45, 85, 25);
+    this.scene.add(glow);
   }
 
   buildSeaweed() {
@@ -90,6 +142,7 @@ export class Environment {
         );
         mesh.position.set(x, groundHeight(x, z) - 0.2, z);
         mesh.scale.setScalar(0.7 + Math.random() * 0.7);
+        mesh.castShadow = true;
         this.scene.add(mesh);
         this.seaweed.push({
           mesh,
@@ -119,6 +172,7 @@ export class Environment {
         part.position.set((Math.random() - 0.5) * 1.6, Math.random() * 0.9, (Math.random() - 0.5) * 1.6);
         part.rotation.set((Math.random() - 0.5) * 0.6, Math.random() * Math.PI, (Math.random() - 0.5) * 0.6);
         part.scale.setScalar(0.6 + Math.random() * 0.9);
+        part.castShadow = true;
         cluster.add(part);
       }
       cluster.position.set(cx, cy, cz);
@@ -127,14 +181,17 @@ export class Environment {
   }
 
   buildRocksAndShells() {
-    const rockMat = new THREE.MeshStandardMaterial({ color: 0x7d8a8f, roughness: 0.95, flatShading: true });
-    const rockGeo = new THREE.DodecahedronGeometry(1, 0);
+    const rockMat = new THREE.MeshStandardMaterial({
+      color: 0xb8c2c6, roughness: 0.95, map: this.rockDiff, normalMap: this.rockNor,
+    });
+    const rockGeos = [createRockGeometry(2, 0.3), createRockGeometry(2, 0.45), createRockGeometry(1, 0.35)];
     for (let i = 0; i < 28; i++) {
       const [x, z] = randomSpot();
-      const rock = new THREE.Mesh(rockGeo, rockMat);
+      const rock = new THREE.Mesh(rockGeos[i % rockGeos.length], rockMat);
       rock.position.set(x, groundHeight(x, z) + 0.2, z);
       rock.scale.set(0.6 + Math.random() * 2.2, 0.5 + Math.random() * 1.2, 0.6 + Math.random() * 2.2);
       rock.rotation.y = Math.random() * Math.PI;
+      rock.castShadow = true;
       this.scene.add(rock);
     }
 
@@ -154,10 +211,12 @@ export class Environment {
 
   // Het koraalrif: grote donkere rotsen begroeid met fel en gloeiend koraal
   buildReef() {
-    const rockMats = [0x3a4750, 0x33405e].map(
-      (c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.95, flatShading: true }),
+    const rockMats = [0x55626c, 0x4d5a78].map(
+      (c) => new THREE.MeshStandardMaterial({
+        color: c, roughness: 0.95, map: this.rockDiff, normalMap: this.rockNor,
+      }),
     );
-    const rockGeo = new THREE.DodecahedronGeometry(1, 1);
+    const rockGeo = createRockGeometry(3, 0.35);
     const coralMats = [0xff4d8d, 0xff8c42, 0xb14aed, 0x3a86ff, 0x35d07f].map(
       (c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.6, emissive: c, emissiveIntensity: 0.25 }),
     );
@@ -176,6 +235,7 @@ export class Environment {
       rock.position.set(x, groundHeight(x, z) + sy * 0.25, z);
       rock.scale.set(sx, sy, 4 + Math.random() * 4);
       rock.rotation.y = Math.random() * Math.PI;
+      rock.castShadow = true;
       this.scene.add(rock);
 
       // Koralen bovenop de rots
@@ -234,6 +294,7 @@ export class Environment {
       geo.translate(0, h / 2, 0);
       const kelp = new THREE.Mesh(geo, kelpMat);
       kelp.position.set(x, groundHeight(x, z) - 0.2, z);
+      kelp.castShadow = true;
       this.scene.add(kelp);
       this.seaweed.push({
         mesh: kelp,
@@ -316,6 +377,13 @@ export class Environment {
 
     // Plankton zweeft heel traag rond
     this.plankton.rotation.y = time * 0.004;
+
+    // Caustics drijven over de bodem, golfjes over het wateroppervlak
+    this.causticsTex.offset.x += dt * 0.013;
+    this.causticsTex.offset.y += dt * 0.008;
+    this.sandMat.emissiveIntensity = 0.18 + Math.sin(time * 1.7) * 0.04;
+    this.waterNormals.offset.x += dt * 0.02;
+    this.waterNormals.offset.y += dt * 0.012;
 
     // Lichtstralen en caustics-flikkering
     for (const r of this.rays) {
