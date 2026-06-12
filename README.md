@@ -43,6 +43,15 @@ Ver weg in de oceaan ligt een rif met grote donkere rotsen vol gekleurd
 koraal en gloeiende anemonen, omringd door hoge kelpslierten. Zwem erheen
 en ontdek het!
 
+## Op de gsm of tablet 📱
+
+Online spelen: **https://siegbertdh.github.io/mattis-vis-spel/**
+
+Op een touch-toestel verschijnt automatisch een virtuele joystick
+(linksonder: duwen = zwemmen en draaien) en knoppen rechtsonder voor
+omhoog ⬆️, omlaag ⬇️ en nest bouwen 🐚. Slepen op het scherm draait de
+camera, net als met de muis.
+
 ## Technisch
 
 - Three.js (lokaal in `lib/`, werkt dus ook zonder internet)

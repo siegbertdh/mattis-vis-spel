@@ -24,6 +24,7 @@ export class Player {
     this.dragging = false;
     this.bounds = OCEAN_BOUNDS;
     this.blockDrag = null; // callback; true = muis is bezig met meubels
+    this.touchInput = { forward: 0, turn: 0, vertical: 0 }; // virtuele joystick
 
     this.keys = new Set();
     window.addEventListener('keydown', (e) => {
@@ -77,17 +78,24 @@ export class Player {
     const up = this.key('Space', 'KeyQ');
     const down = this.key('ShiftLeft', 'ShiftRight', 'KeyE');
 
+    const ti = this.touchInput;
+
     // Snelheid: rustig optrekken, zachtjes uitdrijven
-    const targetSpeed = fwd ? MAX_SPEED : back ? -MAX_SPEED * 0.4 : 0;
+    let targetSpeed = fwd ? MAX_SPEED : back ? -MAX_SPEED * 0.4 : 0;
+    if (ti.forward !== 0) {
+      targetSpeed = MAX_SPEED * (ti.forward > 0 ? ti.forward : ti.forward * 0.4);
+    }
     this.speed += (targetSpeed - this.speed) * (1 - Math.exp(-dt * 2.5));
 
     // Draaien + schuin hangen in de bocht
-    const turn = (left ? 1 : 0) - (right ? 1 : 0);
+    let turn = (left ? 1 : 0) - (right ? 1 : 0);
+    if (ti.turn !== 0) turn = -ti.turn;
     this.yaw += turn * TURN_SPEED * dt;
     this.bank += (turn * -0.35 - this.bank) * (1 - Math.exp(-dt * 5));
 
     // Omhoog / omlaag
-    const targetVert = (up ? VERTICAL_SPEED : 0) - (down ? VERTICAL_SPEED : 0);
+    let targetVert = (up ? VERTICAL_SPEED : 0) - (down ? VERTICAL_SPEED : 0);
+    if (ti.vertical !== 0) targetVert = VERTICAL_SPEED * ti.vertical;
     this.verticalVel += (targetVert - this.verticalVel) * (1 - Math.exp(-dt * 3));
     this.visualPitch += (this.verticalVel * 0.045 - this.visualPitch) * (1 - Math.exp(-dt * 5));
 
@@ -121,7 +129,7 @@ export class Player {
     animateFish(this.fish, dt, Math.abs(this.speed) / MAX_SPEED);
 
     // Camera-orbit drijft terug naar achter de vis zodra je vooruit zwemt
-    if (!this.dragging && fwd) {
+    if (!this.dragging && (fwd || ti.forward > 0.3)) {
       this.orbitYaw *= Math.exp(-dt * 1.2);
       this.orbitPitch += (0.28 - this.orbitPitch) * (1 - Math.exp(-dt * 0.8));
     }

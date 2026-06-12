@@ -7,6 +7,7 @@ import { Nest } from './nest.js';
 import { createHomeScene, HOME_BOUNDS } from './home.js';
 import { FurniturePlacer, CATALOG } from './furniture.js';
 import { setupUI } from './ui.js';
+import { setupTouchControls, showTouchControls, touchInput } from './touch.js';
 
 const container = document.getElementById('game');
 
@@ -67,8 +68,8 @@ function showToast(tekst, ms = 3500) {
 const nest = new Nest(scene, () => showToast('Het nest is klaar! 🐚'));
 const nestAnchor = new THREE.Vector3();
 
-window.addEventListener('keydown', (e) => {
-  if (e.code !== 'KeyN' || e.repeat || !gestart || nest.isBuilding || activeWorld !== 'ocean') return;
+function probeerNestBouwen() {
+  if (!gestart || nest.isBuilding || activeWorld !== 'ocean') return;
   const p = playerFish.position;
   if (p.y - groundHeight(p.x, p.z) < 5) {
     nest.buildAt(p.x, p.z);
@@ -76,7 +77,14 @@ window.addEventListener('keydown', (e) => {
   } else {
     showToast('Zwem naar de bodem om een nest te bouwen 🐚');
   }
+}
+
+window.addEventListener('keydown', (e) => {
+  if (e.code === 'KeyN' && !e.repeat) probeerNestBouwen();
 });
+
+// Op gsm/tablet: virtuele joystick + knoppen
+const heeftTouch = setupTouchControls({ onNest: probeerNestBouwen });
 
 // ----- De binnenwereld van het nest -----
 const home = createHomeScene();
@@ -183,6 +191,10 @@ setupUI({
     playerFish.rotation.set(0, 0, 0);
     player = new Player(playerFish, camera, renderer.domElement);
     player.blockDrag = () => placer.isActive;
+    if (heeftTouch) {
+      player.touchInput = touchInput;
+      showTouchControls();
+    }
 
     // De familie: zelfde soort en kleur als Mattis' vis.
     // Papa en mama iets groter, broertjes en zusjes kleiner.
